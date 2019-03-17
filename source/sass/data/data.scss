@@ -1,0 +1,28 @@
+.data {
+  width: 100%;
+  height: 400px;
+
+  padding: 10px;
+
+  box-sizing: border-box;
+  overflow: auto;
+
+  &__input {
+    width: 100%;
+
+    padding: 10px;
+    margin-bottom: 20px;
+
+    box-sizing: border-box;
+  }
+
+  &__list {
+    @include list-killer;
+  }
+}
+
+@media (min-width: $tablet-width) {
+  .data {
+    width: 40%;
+  }
+}
