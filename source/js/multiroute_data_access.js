@@ -20,9 +20,12 @@ var onCloseBtnClick = function (evt, mRoute, map) {
 
 // Добавление путевой точки
 var onKeydownInput = function (evt, mRoute, map) {
+  evt.stopPropagation();
   if (evt.keyCode === data.KeyCode.ENTER_KEYCODE) {
     // Получение координат введенного пользователем местоположения.
     var newPoint = input.value;
+    input.disabled = true;
+    input.placeholder = 'Поиск ...';
     // Очищаем поле ввода
     input.value = "";
 
@@ -33,6 +36,9 @@ var onKeydownInput = function (evt, mRoute, map) {
         // Если ничего не найдено
         if (res.metaData.geocoder.found < 1) {
           window.alert(data.errorMessage);
+          input.disabled = false;
+          input.placeholder = 'Новая точка';
+          input.focus();
         }
 
         // выуживаем массив результатов
@@ -40,7 +46,11 @@ var onKeydownInput = function (evt, mRoute, map) {
 
         // берем первый результат
         newPoint = objs[0].properties.getAll().text;
-        window.data.objects.push(newPoint);
+
+        // Проверка на повторное добавление
+        if (window.data.objects[window.data.objects.length-1] !== newPoint) {
+          window.data.objects.push(newPoint);
+        }
 
         updateRoute(mRoute, window.data.objects, map);
       }
@@ -81,16 +91,15 @@ var updateRoute = function (mRoute, pointsArr, map) {
 var updatePoints = function (mRoute, map) {
 
   // Удаление DOM элементов списка ПТ
-  while (pointList.firstChild) {
+  /*while (pointList.firstChild) {
   pointList.removeChild(pointList.firstChild);
-  }
+  }*/
 
   // Получаем путевые точки
   var wayPoints = mRoute.getWayPoints();
   // Проход по коллекции путевых точек.
   // Для каждой точки зададим содержимое меток.
   wayPoints.each(function (point, index) {
-
 
   var coords = point.geometry.getCoordinates();
   //var coortds = point.geometry.getCoordinates()[1] + ',' + point.geometry.getCoordinates()[0];
@@ -201,14 +210,14 @@ multiRoute.events
 
     upDateBalloon(multiRoute);
 
+    if (window.result) {
+      window.funcs.renderWayPoint(window.result);
+    }
+    input.disabled = false;
+    input.placeholder = 'Новая точка';
+    input.focus();
+
   });
-
-  multiRoute.events
-  .add("update", function () {
-    console.log('update');
-  });
-
-
 
 
 
