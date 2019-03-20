@@ -1,13 +1,9 @@
-var KeyCode = {
-  ESC_KEYCODE: 27,
-  ENTER_KEYCODE: 13
-};
+var xxx = 0;
+var data = window.data;
 
 var input = document.querySelector('.data__input');
 var pointList = document.querySelector('.data__list');
 var points = [];
-
-var errorMessage = "Ой, кажется такого нет на Земле. Попробуйте ввести по-другому.";
 
 // Удаление путевой точки
 var onCloseBtnClick = function (evt, mRoute, map) {
@@ -24,19 +20,19 @@ var onCloseBtnClick = function (evt, mRoute, map) {
 
 // Добавление путевой точки
 var onKeydownInput = function (evt, mRoute, map) {
-  if (evt.keyCode === KeyCode.ENTER_KEYCODE) {
+  if (evt.keyCode === data.KeyCode.ENTER_KEYCODE) {
     // Получение координат введенного пользователем местоположения.
     var newPoint = input.value;
     // Очищаем поле ввода
     input.value = "";
 
-    //отправляем ввод пользователя на гео-кодирование 
+    //отправляем ввод пользователя на гео-кодирование
     var myGeocoder = ymaps.geocode(newPoint);
     myGeocoder.then(
       function (res) {
         // Если ничего не найдено
         if (res.metaData.geocoder.found < 1) {
-          window.alert(errorMessage);
+          window.alert(data.errorMessage);
         }
 
         // выуживаем массив результатов
@@ -44,18 +40,19 @@ var onKeydownInput = function (evt, mRoute, map) {
 
         // берем первый результат
         newPoint = objs[0].properties.getAll().text;
-        points.push(newPoint);
+        window.data.objects.push(newPoint);
 
-        updateRoute(mRoute, points, map);
+        updateRoute(mRoute, window.data.objects, map);
       }
     );
 
     // Добавляем точку во фронтенд
     // Редактирование введенного пользователем местоположения
-    mRoute.events
+    /*mRoute.events
     .add("update", function () {
       updatePoints(mRoute, map);
-    });
+      console.log('sdfbsdfbvsdfvb');
+    });*/
   }
 };
 
@@ -65,7 +62,7 @@ var updateRoute = function (mRoute, pointsArr, map) {
   // Обновление маршрута
   mRoute.model.setReferencePoints(pointsArr, []);
 
-  // Центровка карты после перестроения маршрута
+  /*// Центровка карты после перестроения маршрута
   mRoute.events
   .add("update", function () {
     // Центровка карты по маршруту
@@ -75,9 +72,9 @@ var updateRoute = function (mRoute, pointsArr, map) {
     if(pointsArr.length < 2) {
       map.setZoom( 16 );
     }
-  });
+  });*/
 
-  upDateBalloon(mRoute);
+  //upDateBalloon(mRoute);
 };
 
 // Обновление путевых точек (frontend)
@@ -93,11 +90,18 @@ var updatePoints = function (mRoute, map) {
   // Проход по коллекции путевых точек.
   // Для каждой точки зададим содержимое меток.
   wayPoints.each(function (point, index) {
-    console.log(point.properties._data.address === undefined);
+
+
+  var coords = point.geometry.getCoordinates();
+  //var coortds = point.geometry.getCoordinates()[1] + ',' + point.geometry.getCoordinates()[0];
+  var request = window.data.requestTemplate + coords[1] + ',' + coords[0];
+  window.xhrRequest(request, 'get', window.funcs.onSuccessGet, window.funcs.onError);
+
+
 
     // Подставляем геокодированный адрес после перетаскивания ПТ
-    if (point.properties._data.address === undefined) {
-      //отправляем ПТ на гео-кодирование 
+    /*if (point.properties._data.address === undefined) {
+      //отправляем ПТ на гео-кодирование
       var myGeocoder = ymaps.geocode(point.geometry.getCoordinates().toString());
       myGeocoder.then(
         function (res) {
@@ -109,9 +113,9 @@ var updatePoints = function (mRoute, map) {
           listElement.appendChild(btn);
         }
       );
-    }
+    }*/
 
-    // Отрисовка в DOM элементов
+    /*// Отрисовка в DOM элементов
     let listElement = document.createElement('li');
     let btn = document.createElement("BUTTON");
     listElement.classList.add('data__point');
@@ -119,22 +123,18 @@ var updatePoints = function (mRoute, map) {
     btn.addEventListener('click', function (evt) {onCloseBtnClick(evt, mRoute, map)});
     listElement.textContent = points[index];
     listElement.appendChild(btn);
-    pointList.appendChild(listElement);
+    pointList.appendChild(listElement);*/
   });
-
-
-
-console.log(pointList.lastChild.textContent);
-  console.log(points[points.length-1].toString());
-
-
 };
 
-var upDateBalloon = function (mRoute) {  
+var upDateBalloon = function (mRoute) {
   var wayPoints = mRoute.getWayPoints();
 
   wayPoints.each(function (point, index) {
-    // Создаем балун у метки второй точки.
+    var disc = window.data.objects[index];
+    console.log(disc);
+    console.log(window.data.objects);
+    // Создаем балун меткок.
     ymaps.geoObject.addon.balloon.get(point);
     point.options.set({
         preset: 'islands#blackStretchyIcon',
@@ -155,7 +155,7 @@ ymaps.ready(init);
 function init () {
   // Создаем мультимаршрут и настраиваем его внешний вид с помощью опций.
   var multiRoute = new ymaps.multiRouter.MultiRoute({
-    referencePoints: points
+    referencePoints: window.data.objects
   }, {
 
     // Автоматически устанавливать границы карты так, чтобы маршрут был виден целиком.
@@ -185,7 +185,28 @@ function init () {
 
 
 
+multiRoute.events
+  .add("update", function () {
+    console.log('update');
 
+    updatePoints(multiRoute, myMap);
+
+    // Центровка карты по маршруту
+    myMap.setBounds(multiRoute.getBounds());
+
+    // Изменение масштаба карты, когда задана всего одна путевая точка
+    if(window.data.objects.length < 2) {
+      myMap.setZoom( 16 );
+    }
+
+    upDateBalloon(multiRoute);
+
+  });
+
+  multiRoute.events
+  .add("update", function () {
+    console.log('update');
+  });
 
 
 
@@ -193,8 +214,7 @@ function init () {
 
   // Перетаскивание списка и обновление маршрута по завершению
   $( "#sortable" ).sortable({
-    stop: function (event, ui) {window.onMoveEnd(multiRoute, points, myMap)}
+    stop: function (event, ui) {window.onMoveEnd(multiRoute, window.data.objects, myMap)}
   }).disableSelection();
 };
-
 
