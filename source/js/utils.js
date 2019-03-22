@@ -1,32 +1,39 @@
 'use strict';
 (function () {
 
-  var renderWayPoint = function (content) {
+  var renderWayPoint = function (mRoute) {
 
       // Отрисовка в DOM элементов
       var pointList = document.querySelector('.data__list');
 
-      if (!pointList.lastChild || pointList.lastChild.textContent !== content) {
+      // Удаление DOM элементов списка ПТ
+      while (pointList.firstChild) {
+        pointList.removeChild(pointList.firstChild);
+      }
+
+      for (var i = 0; i < window.data.objects.length; i++) {
         let listElement = document.createElement('li');
         let btn = document.createElement("BUTTON");
         listElement.classList.add('data__point');
         btn.classList.add('data__close-btn');
         //btn.addEventListener('click', function (evt) {onCloseBtnClick(evt, mRoute, map)});
-        listElement.textContent = content;
+        listElement.textContent = window.data.objects[i];
 
         listElement.appendChild(btn);
         pointList.appendChild(listElement);
       }
+      upDateBalloon(mRoute);
   };
 
   // Callback успешной загрузки данных
-  var onSuccessGet = function (xhr) {
+  var onSuccessGet = function (xhr, index, mRoute) {
     window.result = xhr.response.response.GeoObjectCollection.featureMember[0].GeoObject.metaDataProperty.GeocoderMetaData.text;
+console.log(index);
+    window.data.objects[index] = result;
 
-    //window.data.objects.push(result);
-    console.log(window.result);
+    renderWayPoint(mRoute);
+    console.log( window.data.objects);
 
-    
 
     //setTimeout(function() {
       //renderWayPoint(window.result);

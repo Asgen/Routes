@@ -50,6 +50,7 @@ var onKeydownInput = function (evt, mRoute, map) {
         // Проверка на повторное добавление
         if (window.data.objects[window.data.objects.length-1] !== newPoint) {
           window.data.objects.push(newPoint);
+          points.push(newPoint);
         }
 
         updateRoute(mRoute, window.data.objects, map);
@@ -101,10 +102,14 @@ var updatePoints = function (mRoute, map) {
   // Для каждой точки зададим содержимое меток.
   wayPoints.each(function (point, index) {
 
-  var coords = point.geometry.getCoordinates();
-  //var coortds = point.geometry.getCoordinates()[1] + ',' + point.geometry.getCoordinates()[0];
-  var request = window.data.requestTemplate + coords[1] + ',' + coords[0];
-  window.xhrRequest(request, 'get', window.funcs.onSuccessGet, window.funcs.onError);
+    if (typeof(window.data.objects[index]) !== 'string') {
+
+      var coords = point.geometry.getCoordinates();
+      //var coortds = point.geometry.getCoordinates()[1] + ',' + point.geometry.getCoordinates()[0];
+      var request = window.data.requestTemplate + coords[1] + ',' + coords[0];
+      window.xhrRequest(request, 'get', window.funcs.onSuccessGet, window.funcs.onError, index, mRoute);
+
+    }
 
 
 
@@ -142,13 +147,13 @@ var upDateBalloon = function (mRoute) {
   wayPoints.each(function (point, index) {
     var disc = window.data.objects[index];
     console.log(disc);
-    console.log(window.data.objects);
+    //console.log(points);
     // Создаем балун меткок.
     ymaps.geoObject.addon.balloon.get(point);
     point.options.set({
         preset: 'islands#blackStretchyIcon',
         iconContentLayout: ymaps.templateLayoutFactory.createClass(
-            '{{ properties.name|raw }}'
+            disc
         ),
         balloonContentLayout: ymaps.templateLayoutFactory.createClass(
             '{{ properties.address|raw }}'
@@ -195,8 +200,10 @@ function init () {
 
 
 multiRoute.events
-  .add("update", function () {
-    console.log('update');
+  .add("update", function (evt) {
+    evt.preventDefault();
+    console.log(window.data.objects);
+    console.log(typeof(window.data.objects[0]));
 
     updatePoints(multiRoute, myMap);
 
@@ -210,9 +217,8 @@ multiRoute.events
 
     upDateBalloon(multiRoute);
 
-    if (window.result) {
-      window.funcs.renderWayPoint(window.result);
-    }
+    window.funcs.renderWayPoint();
+
     input.disabled = false;
     input.placeholder = 'Новая точка';
     input.focus();
@@ -220,10 +226,18 @@ multiRoute.events
   });
 
 
+multiRoute.events
+  .add("dragend", function (evt) {
+    //evt.preventDefault();
+
+    console.log('dragend');
+  });
+
+
 
   // Перетаскивание списка и обновление маршрута по завершению
   $( "#sortable" ).sortable({
-    stop: function (event, ui) {window.onMoveEnd(multiRoute, window.data.objects, myMap)}
+    stop: function (event, ui) {window.onMoveEnd(multiRoute, myMap)}
   }).disableSelection();
 };
 

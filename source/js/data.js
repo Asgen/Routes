@@ -3,6 +3,8 @@
 
   var objects = [];
 
+
+
   var apikey = '65126dc0-27cc-4992-a8e5-7a1181f53693';
   var requestTemplate = 'https://geocode-maps.yandex.ru/1.x/?format=json&apikey=' + apikey + '&geocode=';
 
